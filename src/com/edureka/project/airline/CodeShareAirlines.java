@@ -19,7 +19,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 /**
- * Driver code to find airlines with all code share as Y using map-reduce
+ * Driver code to find airlines with any code share as Y using map-reduce
  * @author bidyapati pradhan
  *
  */
@@ -95,14 +95,14 @@ public class CodeShareAirlines {
 		}
 		
 	    public void reduce(LongWritable airlineId, Iterable<Text> csValues,Context context) throws IOException, InterruptedException {
-		   Boolean codeShareFlag = true;
+		   Boolean codeShareFlag = false;
 
-		   //if all the code share is Y, airline is code share
-		   // any one is not Y, its not code share airline
+		   //if any of the code share is Y for an airline
 	       for (Text val : csValues) {   
 	    	   String codeShare = val.toString();  
-	    	   if (!codeShare.equalsIgnoreCase("Y")) {
-	    		   codeShareFlag = false;
+	    	   if (codeShare.equalsIgnoreCase("Y")) {
+	    		   codeShareFlag = true;
+	    		   break;
 	    	   }
 	       }
 	       
@@ -117,12 +117,12 @@ public class CodeShareAirlines {
 	
 	
 	// command: hadoop jar /mnt/home/edureka_1270998/jars/edurekaProjects.jar com.edureka.project.airline.CodeShareAirlines airline/routes.dat airline/Final_airlines airline/airlines_nonstop_out
-    public static void main(String[] args) 
+        public static void main(String[] args) 
             throws IOException, ClassNotFoundException, InterruptedException {
 
-			Configuration conf = new Configuration();
-			conf.set("mapreduce.output.textoutputformat.separator", ",");
-			Job job = Job.getInstance(conf);
+		    Configuration conf = new Configuration();
+		    conf.set("mapreduce.output.textoutputformat.separator", ",");
+		    Job job = Job.getInstance(conf);
 		    job.setJarByClass(NonStopAirlines.class);
 		    job.setJobName("Airlines with Code Share");
 		    job.setMapperClass(MyMapper.class);
@@ -130,7 +130,7 @@ public class CodeShareAirlines {
 		    job.setNumReduceTasks(1);
 		    job.setReducerClass(ReduceSum.class);
 		    job.setMapOutputKeyClass(LongWritable.class);
-		    job.setMapOutputValueClass(LongWritable.class);
+		    job.setMapOutputValueClass(Text.class);
 		    job.setOutputKeyClass(LongWritable.class);
 		    job.setOutputValueClass(Text.class);
 		  
