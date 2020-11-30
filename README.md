@@ -1,4 +1,4 @@
-# project_mr_airlines
+# Map reduce project on airlines data
 This project is created for learning purpose only.
 
 Pre-requisite:
