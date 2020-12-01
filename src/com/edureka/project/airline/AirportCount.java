@@ -14,7 +14,6 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 
 public class AirportCount {
-
 	
 	// inner mapper class  -  to collect all airport of a country
 	public static class MyMapper extends Mapper<LongWritable,Text, Text, LongWritable> {
@@ -34,18 +33,41 @@ public class AirportCount {
          }  
     }
 	
-	//reducer to add all airports per country
+	//reducer to find country with max airport
 	public static class ReduceSum  extends Reducer<Text,LongWritable,Text,LongWritable>
 	{
+		private Text airportName;
+		private long airportCount;
+		@Override
+	    public void setup(Context context) throws IOException, 
+	                                     InterruptedException 
+	    { 
+			airportName = new Text("ERROR");
+			airportCount = 0; 
+	    } 
 		
+		@Override
 	    public void reduce(Text country, Iterable<LongWritable> values,Context context) throws IOException, InterruptedException {
 		   long count = 0;
 	       for (LongWritable val : values) {   
 	    	   count = count + val.get();  
 	       }
 	       
-	       context.write(country, new LongWritable(count));
-		}
+	       if (count > airportCount) {
+	    	   airportName = new Text(country);
+	    	   airportCount = count;
+	       }
+	       
+	       //context.write(country, new LongWritable(count));
+	       
+	    }
+	    
+	    @Override
+	    public void cleanup(Context context) throws IOException, 
+	                                       InterruptedException { 
+	    	// finally print the country with maximum airport
+	    	context.write(airportName, new LongWritable(airportCount));
+	    } 
 	}
 	
 	
@@ -57,7 +79,7 @@ public class AirportCount {
 			conf.set("mapreduce.output.textoutputformat.separator", ",");
 			Job job = Job.getInstance(conf);
 		    job.setJarByClass(AirportCount.class);
-		    job.setJobName("Arport Count");
+		    job.setJobName("Airport Count");
 		    job.setMapperClass(MyMapper.class);
 		    job.setNumReduceTasks(1);
 		    job.setReducerClass(ReduceSum.class);
